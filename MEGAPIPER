@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MINIBATTLE</title>
+    <title>MEGAPIPER</title>
     <style>
         body { margin: 0; overflow: hidden; background: #111; font-family: Arial; }
         canvas { display: block; }
