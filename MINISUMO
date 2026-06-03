@@ -110,7 +110,7 @@ button:hover {
 <!-- MENU -->
 <div id="menu" class="overlay">
   <div class="title">MINI SUMO</div>
-  <div style="color:#bbb">Empeny el rival fora del cercle</div>
+  <div style="color:#bbb">Push the opponent out of the circle</div>
   <button onclick="startGame()">PLAY MINISUMO</button>
 </div>
 
