@@ -28,13 +28,9 @@ canvas {
     border: none;
     border-radius: 10px;
     cursor: pointer;
-    background: #ffffff;
+    background: #fff;
     color: #000;
     display: none;
-}
-
-#playAgain:hover {
-    transform: translate(-50%, -50%) scale(1.05);
 }
 </style>
 </head>
@@ -56,34 +52,24 @@ addEventListener("resize", resize);
 resize();
 
 const keys = {};
-
 onkeydown = e => keys[e.key.toLowerCase()] = true;
 onkeyup = e => keys[e.key.toLowerCase()] = false;
 
-let p1, p2, meteors, gameOver, winner;
+let p1, p2, meteors, gameOver, winner, winnerColor;
 
 function initGame() {
-    p1 = {
-        x: canvas.width * 0.3,
-        y: canvas.height * 0.8,
-        c: "#33aaff",
-        dead: false
-    };
-
-    p2 = {
-        x: canvas.width * 0.7,
-        y: canvas.height * 0.8,
-        c: "#ff3333",
-        dead: false
-    };
+    p1 = { x: 200, y: 400, c: "#33aaff", dead: false };
+    p2 = { x: 600, y: 400, c: "#ff3333", dead: false };
 
     meteors = [];
     gameOver = false;
     winner = "";
+    winnerColor = "#fff";
+
     playAgainBtn.style.display = "none";
 }
 
-function drawShip(p) {
+function ship(p) {
     ctx.save();
     ctx.translate(p.x, p.y);
 
@@ -99,124 +85,84 @@ function drawShip(p) {
     ctx.restore();
 }
 
-function spawnMeteor() {
+function meteor() {
     meteors.push({
         x: Math.random() * canvas.width,
-        y: -40,
+        y: -30,
         r: 15 + Math.random() * 25,
         s: 3 + Math.random() * 4
     });
 }
 
 setInterval(() => {
-    if (!gameOver) spawnMeteor();
+    if (!gameOver) meteor();
 }, 500);
 
-function hit(player, meteor) {
-    return Math.hypot(
-        player.x - meteor.x,
-        player.y - meteor.y
-    ) < meteor.r + 20;
+function hit(p, m) {
+    return Math.hypot(p.x - m.x, p.y - m.y) < m.r + 20;
 }
 
-playAgainBtn.addEventListener("click", () => {
-    initGame();
-});
+playAgainBtn.onclick = initGame;
 
-function updatePlayers() {
-
-    // Player 1 (WASD)
-    if (keys.w) p1.y -= 6;
-    if (keys.s) p1.y += 6;
-    if (keys.a) p1.x -= 6;
-    if (keys.d) p1.x += 6;
-
-    // Player 2 (OKL;)
-    if (keys.o) p2.y -= 6;
-    if (keys.l) p2.y += 6;
-    if (keys.k) p2.x -= 6;
-    if (keys.ñ) p2.x += 6;
-
-    // Keep players on screen
-    [p1, p2].forEach(p => {
-        p.x = Math.max(20, Math.min(canvas.width - 20, p.x));
-        p.y = Math.max(20, Math.min(canvas.height - 20, p.y));
-    });
-}
-
-function updateMeteors() {
-
-    for (let i = meteors.length - 1; i >= 0; i--) {
-        const m = meteors[i];
-
-        m.y += m.s;
-
-        if (m.y - m.r > canvas.height) {
-            meteors.splice(i, 1);
-            continue;
-        }
-
-        if (!p1.dead && hit(p1, m)) {
-            p1.dead = true;
-            gameOver = true;
-            winner = "Player 2 Wins!";
-            playAgainBtn.style.display = "block";
-        }
-
-        if (!p2.dead && hit(p2, m)) {
-            p2.dead = true;
-            gameOver = true;
-            winner = "Player 1 Wins!";
-            playAgainBtn.style.display = "block";
-        }
-    }
-}
-
-function drawMeteors() {
-    meteors.forEach(m => {
-        ctx.fillStyle = "#888";
-
-        ctx.beginPath();
-        ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
-        ctx.fill();
-    });
-}
-
-function drawWinner() {
-    ctx.fillStyle = "white";
-    ctx.font = "50px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(
-        winner,
-        canvas.width / 2,
-        canvas.height / 2
-    );
-}
-
-function gameLoop() {
-
-    requestAnimationFrame(gameLoop);
+function loop() {
+    requestAnimationFrame(loop);
 
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     if (!gameOver) {
-        updatePlayers();
-        updateMeteors();
+
+        if (keys.w) p1.y -= 6;
+        if (keys.s) p1.y += 6;
+        if (keys.a) p1.x -= 6;
+        if (keys.d) p1.x += 6;
+
+        if (keys.o) p2.y -= 6;
+        if (keys.l) p2.y += 6;
+        if (keys.k) p2.x -= 6;
+        if (keys["ñ"]) p2.x += 6;
+
+        meteors.forEach(m => {
+            m.y += m.s;
+
+            if (!p1.dead && hit(p1, m)) {
+                p1.dead = true;
+                gameOver = true;
+                winner = "BLUE PLAYER WINS!";
+                winnerColor = p1.c;
+                playAgainBtn.style.display = "block";
+            }
+
+            if (!p2.dead && hit(p2, m)) {
+                p2.dead = true;
+                gameOver = true;
+                winner = "RED PLAYER WINS!";
+                winnerColor = p2.c;
+                playAgainBtn.style.display = "block";
+            }
+        });
     }
 
-    drawMeteors();
+    meteors.forEach(m => {
+        ctx.fillStyle = "#888";
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+        ctx.fill();
+    });
 
-    if (!p1.dead) drawShip(p1);
-    if (!p2.dead) drawShip(p2);
+    if (!p1.dead) ship(p1);
+    if (!p2.dead) ship(p2);
 
     if (gameOver) {
-        drawWinner();
+        ctx.fillStyle = winnerColor;
+        ctx.font = "50px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(winner, canvas.width / 2, canvas.height / 2);
     }
 }
 
 initGame();
-gameLoop();
+loop();
 </script>
 
 </body>
