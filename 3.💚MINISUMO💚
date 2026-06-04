@@ -16,13 +16,11 @@ body {
   overflow: hidden;
 }
 
-/* CANVAS */
 canvas {
   background: #222;
   border-radius: 50%;
 }
 
-/* HUD INSTRUCCIONS */
 #hud {
   position: absolute;
   top: 10px;
@@ -34,7 +32,6 @@ canvas {
 .red { color: #ff4b4b; font-weight: bold; }
 .blue { color: #4ba3ff; font-weight: bold; }
 
-/* SCORE */
 #score {
   position: absolute;
   top: 40px;
@@ -45,7 +42,6 @@ canvas {
 #score .r { color: red; }
 #score .b { color: dodgerblue; }
 
-/* OVERLAY GENERAL */
 .overlay {
   position: absolute;
   width: 100%;
@@ -59,7 +55,6 @@ canvas {
   color: white;
 }
 
-/* TITOL */
 .title {
   font-size: 60px;
   font-weight: bold;
@@ -68,7 +63,6 @@ canvas {
   text-shadow: 0 0 20px rgba(255,255,255,0.3);
 }
 
-/* BOTONS */
 button {
   padding: 12px 24px;
   font-size: 20px;
@@ -85,7 +79,6 @@ button:hover {
   transform: scale(1.05);
 }
 
-/* WIN TEXT */
 #winText {
   font-size: 50px;
   font-weight: bold;
@@ -96,25 +89,21 @@ button:hover {
 </head>
 <body>
 
-<!-- INSTRUCCIONS -->
 <div id="hud">
   <span class="red">RED</span>: W A S D · 
-  <span class="blue">BLUE</span>: O K L Ñ
+  <span class="blue">BLUE</span>: ARROWS
 </div>
 
-<!-- SCORE -->
 <div id="score">
   <span class="r" id="s1">0</span> - <span class="b" id="s2">0</span>
 </div>
 
-<!-- MENU -->
 <div id="menu" class="overlay">
   <div class="title">MINI SUMO</div>
   <div style="color:#bbb">Push the opponent out of the circle</div>
   <button onclick="startGame()">PLAY MINISUMO</button>
 </div>
 
-<!-- WIN -->
 <div id="winScreen" class="overlay" style="display:none;">
   <div id="winText"></div>
   <button onclick="startGame()">PLAY AGAIN</button>
@@ -170,7 +159,6 @@ function physics(p) {
   p.x += p.vx;
   p.y += p.vy;
 
-  // gel feel
   p.vx *= 0.992;
   p.vy *= 0.992;
 }
@@ -264,7 +252,9 @@ function draw() {
 function loop() {
   if (running) {
     move(p1, "w", "s", "a", "d");
-    move(p2, "o", "l", "k", "ñ");
+
+    // 🔥 P2 ara amb fletxes
+    move(p2, "arrowup", "arrowdown", "arrowleft", "arrowright");
 
     physics(p1);
     physics(p2);
