@@ -1,55 +1,123 @@
+
 <!DOCTYPE html>
-<html lang="ca">
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>🏓MULTIPONG🏓</title>
+<meta charset="UTF-8">
+<title>🏓 MULTIPONG 🏓</title>
+
 <style>
-    body {
-        margin: 0;
-        background: #050814;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        font-family: Arial;
-    }
+body{
+    margin:0;
+    background:#050814;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    font-family:Arial, sans-serif;
+}
 
-    canvas {
-        background: #071026;
-        border: 2px solid #00e5ff;
-        box-shadow: 0 0 20px #00e5ff;
-    }
+canvas{
+    background:#071026;
+    border:2px solid #00e5ff;
+    box-shadow:0 0 20px #00e5ff;
+}
 
-    .screen {
-        position: absolute;
-        text-align: center;
-        color: white;
-    }
+.screen{
+    position:absolute;
+    text-align:center;
+    color:white;
+}
 
-    button {
-        padding: 10px 20px;
-        font-size: 18px;
-        background: #00e5ff;
-        border: none;
-        cursor: pointer;
-        font-weight: bold;
-    }
+h1{
+    color:#00e5ff;
+    text-shadow:0 0 15px #00e5ff;
+}
 
-    h1 {
-        color: #00e5ff;
-    }
+button{
+    padding:12px 24px;
+    font-size:18px;
+    font-weight:bold;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    margin:6px;
+    transition:0.2s;
+}
+
+button:hover{
+    transform:scale(1.05);
+}
+
+.pvpBtn{
+    background:#00e5ff;
+    color:white;
+    box-shadow:0 0 15px #00e5ff;
+}
+
+.easyBtn{
+    background:#00c853;
+    color:white;
+    box-shadow:0 0 15px #00c853;
+}
+
+.mediumBtn{
+    background:#ffd600;
+    color:white;
+    box-shadow:0 0 15px #ffd600;
+}
+
+.impossibleBtn{
+    background:linear-gradient(45deg,#ff1744,#aa00ff);
+    color:white;
+    box-shadow:0 0 20px #ff1744;
+}
+
+.menuBtn{
+    background:#00e5ff;
+    color:black;
+}
 </style>
 </head>
 <body>
 
 <div id="startScreen" class="screen">
-    <h1>🏓MULTIPONG🏓</h1>
-    <button onclick="startGame()">▶ PLAY</button>
+    <h1>🏓 MULTIPONG 🏓</h1>
+
+    <button class="pvpBtn" onclick="startGame('pvp')">
+        2 PLAYERS
+    </button>
+
+    <br>
+
+    <button class="easyBtn" onclick="startGame('easy')">
+        EASY BOT
+    </button>
+
+    <br>
+
+    <button class="mediumBtn" onclick="startGame('medium')">
+        MEDIUM BOT
+    </button>
+
+    <br>
+
+    <button class="impossibleBtn" onclick="startGame('impossible')">
+        IMPOSSIBLE BOT
+    </button>
 </div>
 
 <div id="endScreen" class="screen" style="display:none;">
     <h1 id="winnerText"></h1>
-    <button onclick="restartGame()">🔄 PLAY AGAIN</button>
+
+    <button class="menuBtn" onclick="restartGame()">
+        PLAY AGAIN
+    </button>
+
+    <br><br>
+
+    <button class="menuBtn" onclick="goToMenu()">
+        GO TO MENU
+    </button>
 </div>
 
 <canvas id="game" width="500" height="500"></canvas>
@@ -62,88 +130,154 @@ const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
 
 let running = false;
+let gameMode = "pvp";
 
-let paddle = { w: 90, h: 12 };
+const paddle = {
+    w: 90,
+    h: 12
+};
 
 let yellow = {
-    x: (WIDTH - paddle.w) / 2,
-    y: 10,
-    score: 0
+    x:(WIDTH - paddle.w)/2,
+    y:10,
+    score:0
 };
 
 let green = {
-    x: (WIDTH - paddle.w) / 2,
-    y: HEIGHT - paddle.h - 10,
-    score: 0
+    x:(WIDTH - paddle.w)/2,
+    y:HEIGHT - paddle.h - 10,
+    score:0
 };
 
-// Pilota rodona
 let ball = {
-    x: WIDTH / 2,
-    y: HEIGHT / 2,
-    r: 20,
-    vx: 0,
-    vy: 0
+    x:WIDTH/2,
+    y:HEIGHT/2,
+    r:20,
+    vx:0,
+    vy:0
 };
 
 let keys = {};
+
 let time = 100;
 
-// velocitat per punt
 let baseSpeed = 3;
 let speedTimer = 0;
 let maxSpeed = 0;
 
-document.addEventListener("keydown", e => keys[e.key] = true);
-document.addEventListener("keyup", e => keys[e.key] = false);
+document.addEventListener("keydown",e=>{
+    keys[e.key] = true;
+});
 
-function resetBall(dir = 1) {
-    ball.x = WIDTH / 2;
-    ball.y = HEIGHT / 2;
+document.addEventListener("keyup",e=>{
+    keys[e.key] = false;
+});
+
+function resetBall(dir=1){
+
+    ball.x = WIDTH/2;
+    ball.y = HEIGHT/2;
 
     baseSpeed = 3;
     speedTimer = 0;
 
-    // màxim 500% de la velocitat inicial
     maxSpeed = baseSpeed * 5;
 
     ball.vx = baseSpeed * dir;
     ball.vy = baseSpeed * (Math.random() > 0.5 ? 1 : -1);
 }
 
-function increaseSpeed() {
+function increaseSpeed(){
+
     speedTimer++;
 
-    if (speedTimer >= 300) {
+    if(speedTimer >= 300){
+
         speedTimer = 0;
 
-        let factor = 1.35;
+        const factor = 1.35;
 
         ball.vx *= factor;
         ball.vy *= factor;
 
-        let speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+        const speed = Math.sqrt(
+            ball.vx * ball.vx +
+            ball.vy * ball.vy
+        );
 
-        if (speed > maxSpeed) {
-            let scale = maxSpeed / speed;
+        if(speed > maxSpeed){
+
+            const scale = maxSpeed / speed;
+
             ball.vx *= scale;
             ball.vy *= scale;
         }
     }
 }
 
-function updatePaddles() {
-    if (keys["a"]) yellow.x -= 6;
-    if (keys["d"]) yellow.x += 6;
+function updateBot(){
 
-    if (keys["ArrowLeft"]) green.x -= 6;
-    if (keys["ArrowRight"]) green.x += 6;
+    if(gameMode === "pvp") return;
 
-    yellow.x = Math.max(0, Math.min(WIDTH - paddle.w, yellow.x));
-    green.x = Math.max(0, Math.min(WIDTH - paddle.w, green.x));
+    const targetX = ball.x - paddle.w/2;
+
+    if(gameMode === "impossible"){
+
+        yellow.x = targetX;
+    }
+    else{
+
+        let speed;
+
+        if(gameMode === "easy"){
+            speed = 2;
+        }else{
+            speed = 4;
+        }
+
+        if(yellow.x + paddle.w/2 < ball.x){
+            yellow.x += speed;
+        }
+
+        if(yellow.x + paddle.w/2 > ball.x){
+            yellow.x -= speed;
+        }
+    }
+
+    yellow.x = Math.max(
+        0,
+        Math.min(WIDTH - paddle.w, yellow.x)
+    );
 }
 
-function hit(p) {
+function updatePaddles(){
+
+    if(gameMode === "pvp"){
+
+        if(keys["a"]) yellow.x -= 6;
+        if(keys["d"]) yellow.x += 6;
+
+    }else{
+
+        updateBot();
+    }
+
+    if(keys["ArrowLeft"]) green.x -= 6;
+    if(keys["ArrowRight"]) green.x += 6;
+
+    yellow.x = Math.max(
+        0,
+        Math.min(WIDTH - paddle.w, yellow.x)
+    );
+
+    green.x = Math.max(
+        0,
+        Math.min(WIDTH - paddle.w, green.x)
+    );
+}
+
+function hit(p){
+
     return (
         ball.x + ball.r > p.x &&
         ball.x - ball.r < p.x + paddle.w &&
@@ -152,68 +286,98 @@ function hit(p) {
     );
 }
 
-function updateBall() {
+function updateBall(){
+
     ball.x += ball.vx;
     ball.y += ball.vy;
 
-    // parets laterals
-    if (ball.x - ball.r <= 0 || ball.x + ball.r >= WIDTH) {
+    if(
+        ball.x - ball.r <= 0 ||
+        ball.x + ball.r >= WIDTH
+    ){
         ball.vx *= -1;
     }
 
-    // rebot paddle superior
-    if (hit(yellow) && ball.vy < 0) {
+    if(hit(yellow) && ball.vy < 0){
+
         ball.vy *= -1;
         ball.y = yellow.y + paddle.h + ball.r;
     }
 
-    // rebot paddle inferior
-    if (hit(green) && ball.vy > 0) {
+    if(hit(green) && ball.vy > 0){
+
         ball.vy *= -1;
         ball.y = green.y - ball.r;
     }
 
-    // punt per al jugador inferior
-    if (ball.y + ball.r < 0) {
+    if(ball.y + ball.r < 0){
+
         green.score++;
         resetBall(1);
     }
 
-    // punt per al jugador superior
-    if (ball.y - ball.r > HEIGHT) {
+    if(ball.y - ball.r > HEIGHT){
+
         yellow.score++;
         resetBall(-1);
     }
 }
 
-function draw() {
-    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+function draw(){
 
-    // paddle superior
+    ctx.clearRect(0,0,WIDTH,HEIGHT);
+
     ctx.fillStyle = "yellow";
-    ctx.fillRect(yellow.x, yellow.y, paddle.w, paddle.h);
+    ctx.fillRect(
+        yellow.x,
+        yellow.y,
+        paddle.w,
+        paddle.h
+    );
 
-    // paddle inferior
     ctx.fillStyle = "lime";
-    ctx.fillRect(green.x, green.y, paddle.w, paddle.h);
+    ctx.fillRect(
+        green.x,
+        green.y,
+        paddle.w,
+        paddle.h
+    );
 
-    // pilota
     ctx.fillStyle = "white";
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+    ctx.arc(
+        ball.x,
+        ball.y,
+        ball.r,
+        0,
+        Math.PI * 2
+    );
     ctx.fill();
 
-    // UI
     ctx.fillStyle = "white";
     ctx.font = "18px Arial";
 
-    ctx.fillText(`Yellow: ${yellow.score}`, 20, 30);
-    ctx.fillText(`Green: ${green.score}`, 20, HEIGHT - 20);
-    ctx.fillText(`Time: ${time}s`, WIDTH - 90, 30);
-}
+    ctx.fillText(
+        `YELLOW: ${yellow.score}`,
+        20,
+        30
+    );
 
-function loop() {
-    if (!running) return;
+    ctx.fillText(
+        `GREEN: ${green.score}`,
+        20,
+        HEIGHT - 20
+    );
+
+    ctx.fillText(
+        `Time: ${time}s`,
+        WIDTH - 90,
+        30
+    );
+}
+function loop(){
+
+    if(!running) return;
 
     updatePaddles();
     updateBall();
@@ -223,20 +387,25 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
-function timer() {
-    if (!running) return;
+function timer(){
+
+    if(!running) return;
 
     time--;
 
-    if (time <= 0) {
+    if(time <= 0){
+
         end();
         return;
     }
 
-    setTimeout(timer, 1000);
+    setTimeout(timer,1000);
 }
 
-function startGame() {
+function startGame(mode){
+
+    gameMode = mode;
+
     document.getElementById("startScreen").style.display = "none";
 
     running = true;
@@ -246,37 +415,73 @@ function startGame() {
     loop();
 }
 
-function end() {
+function end(){
+
     running = false;
 
-    const title = document.getElementById("winnerText");
+    const title =
+        document.getElementById("winnerText");
 
-    if (yellow.score > green.score) {
+    if(yellow.score > green.score){
+
         title.innerText = "YELLOW WINS!";
         title.style.color = "yellow";
     }
-    else if (green.score > yellow.score) {
+    else if(green.score > yellow.score){
+
         title.innerText = "GREEN WINS!";
         title.style.color = "lime";
     }
-    else {
+    else{
+
         title.innerText = "DRAW!";
-        title.style.color = "gray";
+        title.style.color = "white";
     }
 
     document.getElementById("endScreen").style.display = "block";
 }
+function restartGame(){
 
-function restartGame() {
     yellow.score = 0;
     green.score = 0;
+
+    yellow.x = (WIDTH - paddle.w)/2;
+    green.x = (WIDTH - paddle.w)/2;
+
     time = 100;
 
     document.getElementById("endScreen").style.display = "none";
 
-    startGame();
+    running = false;
+
+    startGame(gameMode);
+}
+
+function goToMenu(){
+
+    running = false;
+
+    yellow.score = 0;
+    green.score = 0;
+
+    yellow.x = (WIDTH - paddle.w)/2;
+    green.x = (WIDTH - paddle.w)/2;
+
+    time = 100;
+
+    ball.x = WIDTH/2;
+    ball.y = HEIGHT/2;
+    ball.vx = 0;
+    ball.vy = 0;
+
+    ctx.clearRect(0,0,WIDTH,HEIGHT);
+
+    document.getElementById("endScreen").style.display = "none";
+    document.getElementById("startScreen").style.display = "block";
+
 }
 </script>
 
 </body>
 </html>
+
