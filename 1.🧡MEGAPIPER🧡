@@ -191,8 +191,8 @@ button:hover { transform:scale(1.05); }
 <div class="hud">
 
 <div class="stat-box">
-<div id="reload1" class="reload-text">RELOADING...</div>
-<div class="label"><span>P1</span></div>
+<div id="reload1" class="reload-text">Reloading...</div>
+<div class="label"><span>BLUE</span></div>
 <div class="bar-bg"><div id="p1-hp" class="bar"></div></div>
 <div class="ammo-box">
 <div id="p1-a1" class="ammo-pip"></div>
@@ -202,8 +202,8 @@ button:hover { transform:scale(1.05); }
 </div>
 
 <div class="stat-box" style="text-align:right;">
-<div id="reload2" class="reload-text">RELOADING...</div>
-<div class="label"><span>P2</span></div>
+<div id="reload2" class="reload-text">Reloading...</div>
+<div class="label"><span>RED</span></div>
 <div class="bar-bg"><div id="p2-hp" class="bar"></div></div>
 <div class="ammo-box">
 <div id="p2-a1" class="ammo-pip"></div>
@@ -543,11 +543,11 @@ function gameOver(winner){
     const winText = document.getElementById("win");
 
     if(winner === 1){
-        winText.textContent = "PLAYER BLUE WINS!";
+        winText.textContent = "BLUE WINS!";
         winText.style.color = "#00aaff";
     }
     else{
-        winText.textContent = "PLAYER RED WINS!";
+        winText.textContent = "RED WINS!";
         winText.style.color = "#ff3333";
     }
 
