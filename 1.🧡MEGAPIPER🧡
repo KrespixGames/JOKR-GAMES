@@ -551,7 +551,7 @@ function gameOver(winner){
         winText.style.color = "#ff3333";
     }
 
-    winText.style.fontSize = "56px";
+    winText.style.fontSize = "63px";
     winText.style.marginBottom = "25px";
 
     document.getElementById("msg").style.display = "block";
