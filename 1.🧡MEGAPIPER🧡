@@ -226,7 +226,10 @@ let difficulty="medium";
 let gameStarted=false;
 
 let botTimer=0;
-
+let botBrain = {
+    targetX: 0,
+    thinkTime: 0
+};
 /* ===== INPUT ===== */
 const keys={
 p1Left:false,p1Right:false,
@@ -389,34 +392,109 @@ bullets.push(b);
 /* ===== BOT ===== */
 function botAI(){
 
-if(mode!=="bot") return;
+    if(mode!=="bot") return;
 
-let speed,shootChance,aimError;
+    // EASY
+    if(difficulty==="easy"){
 
-if(difficulty==="easy"){
-speed=0.05; shootChance=0.004; aimError=4.5;
-}
-if(difficulty==="medium"){
-speed=0.16; shootChance=0.014; aimError=1.5;
-}
-if(difficulty==="hard"){
-speed=0.45; shootChance=0.05; aimError=0;
-p2.position.x = p1.position.x; // perfect dodge/aim tracking
+        let target=p1.position.x+(Math.random()-0.5)*4.5;
+
+        if(p2.position.x<target) p2.position.x+=0.05;
+        if(p2.position.x>target) p2.position.x-=0.05;
+
+        botTimer+=Math.random()*0.004;
+
+        if(botTimer>1){
+            shoot(2);
+            botTimer=0;
+        }
+
+        return;
+    }
+
+    // MEDIUM
+    if(difficulty==="medium"){
+
+        let target=p1.position.x+(Math.random()-0.5)*1.5;
+
+        if(p2.position.x<target) p2.position.x+=0.16;
+        if(p2.position.x>target) p2.position.x-=0.16;
+
+        botTimer+=Math.random()*0.014;
+
+        if(botTimer>1){
+            shoot(2);
+            botTimer=0;
+        }
+
+        return;
+    }
+
+    // HARD AI
+
+    botBrain.thinkTime++;
+
+    // pensa cada mig segon
+    if(botBrain.thinkTime > 30){
+
+        let bestX = 0;
+        let bestScore = -999999;
+
+        for(let x=-14;x<=14;x++){
+
+            let score = Math.random()*20;
+
+            // evitar bales
+            for(let b of bullets){
+
+                if(b.userData.dir!==1) continue;
+
+                let dx = Math.abs(x-b.position.x);
+
+                score += dx*25;
+
+                if(dx<2) score-=500;
+            }
+
+            // intentar mantenir visió del jugador
+            score -= Math.abs(x-p1.position.x)*2;
+
+            if(score>bestScore){
+                bestScore=score;
+                bestX=x;
+            }
+        }
+
+        botBrain.targetX = bestX;
+        botBrain.thinkTime = 0;
+    }
+
+    // moviment
+    let speed = 0.6;
+
+    if(p2.position.x < botBrain.targetX){
+        p2.position.x += speed;
+    }
+
+    if(p2.position.x > botBrain.targetX){
+        p2.position.x -= speed;
+    }
+
+    p2.position.x =
+        Math.max(-14,Math.min(14,p2.position.x));
+
+    // disparar si té línia de tir
+    if(
+        Math.abs(p2.position.x-p1.position.x)<2 &&
+        ammo2>0 &&
+        !reloading2
+    ){
+        if(Math.random()<0.15){
+            shoot(2);
+        }
+    }
 }
 
-/* MOVE */
-let target=p1.position.x+(Math.random()-0.5)*aimError;
-
-if(p2.position.x<target) p2.position.x+=speed;
-if(p2.position.x>target) p2.position.x-=speed;
-
-/* SHOOT */
-botTimer+=Math.random()*shootChance;
-if(botTimer>1){
-shoot(2);
-botTimer=0;
-}
-}
 
 /* ===== UI ===== */
 function updateUI(){
