@@ -148,6 +148,25 @@ button:hover { transform:scale(1.05); }
     border:2px solid gold;
     pointer-events:auto;
 }
+#countdown{
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:120px;
+    font-weight:bold;
+    color:gold;
+    text-shadow:0 0 30px black;
+    z-index:20;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity 0.2s;
+}
+
+#countdown.show{
+    opacity:1;
+}
 </style>
 </head>
 
@@ -166,7 +185,7 @@ button:hover { transform:scale(1.05); }
     <button onclick="startGame('medium')">MEDIUM</button>
     <button onclick="startGame('hard')">HARD</button>
 </div>
-
+<div id="countdown"></div>
 <!-- ===== UI ===== -->
 <div id="ui">
 <div class="hud">
@@ -249,10 +268,17 @@ startGame("none");
 }
 
 function startGame(diff){
-difficulty=diff;
-document.getElementById("difficultyMenu").style.display="none";
-init();
-gameStarted=true;
+    difficulty = diff;
+
+    document.getElementById("difficultyMenu").style.display = "none";
+
+    init();
+
+    // ❌ NO comença el joc aquí
+    // gameStarted = true;
+
+    // ✅ comença el compte enrere
+    startCountdown();
 }
 
 /* ===== INIT ===== */
@@ -335,7 +361,7 @@ if(e.code==="KeyD") keys.p2Right=false;
 
 /* ===== SHOOT + RELOAD ===== */
 function shoot(p){
-
+    if(!gameStarted) return;
 if(p===1){
 if(reloading1||ammo1<=0) return;
 ammo1--;
@@ -510,7 +536,26 @@ document.getElementById("p2-hp").style.width=(hp2/200*100)+"%";
 document.getElementById("reload1").classList.toggle("show", reloading1);
 document.getElementById("reload2").classList.toggle("show", reloading2);
 }
+function gameOver(winner){
 
+    gameStarted = false;
+
+    const winText = document.getElementById("win");
+
+    if(winner === 1){
+        winText.textContent = "PLAYER BLUE WINS!";
+        winText.style.color = "#00aaff";
+    }
+    else{
+        winText.textContent = "PLAYER RED WINS!";
+        winText.style.color = "#ff3333";
+    }
+
+    winText.style.fontSize = "56px";
+    winText.style.marginBottom = "25px";
+
+    document.getElementById("msg").style.display = "block";
+}
 
 
 function restartGame(){
@@ -538,91 +583,115 @@ document.getElementById("msg").style.display="none";
 
 updateUI();
 
-gameStarted=true;
-}
-
-function gameOver(winner){
-
 gameStarted=false;
+startCountdown();}
+function startCountdown(){
 
-const winText=document.getElementById("win");
+    const el = document.getElementById("countdown");
 
-if(winner===1){
-    winText.textContent="PLAYER BLUE WINS!";
-    winText.style.color="#00aaff";
-}else{
-    winText.textContent="PLAYER RED WINS!";
-    winText.style.color="#ff3333";
-}
+    let t = 3;
 
-winText.style.fontSize="56px";
-winText.style.marginBottom="25px";
+    el.textContent = t;
+    el.classList.add("show");
 
-document.getElementById("msg").style.display="block";
+    const interval = setInterval(() => {
+
+        t--;
+
+        if(t > 0){
+
+            el.textContent = t;
+
+        }
+        else if(t === 0){
+
+            el.textContent = "GO!";
+
+        }
+        else{
+
+            clearInterval(interval);
+
+            el.classList.remove("show");
+
+            gameStarted = true;
+        }
+
+    }, 1000);
 }
 
 /* ===== LOOP ===== */
 function animate(){
 
-requestAnimationFrame(animate);
-if(!gameStarted) return;
+    requestAnimationFrame(animate);
 
-/* MOVE P1 */
-if(keys.p1Left && p1.position.x>-14) p1.position.x-=0.3;
-if(keys.p1Right && p1.position.x<14) p1.position.x+=0.3;
+    if(gameStarted){
 
-/* MOVE P2 */
-if(mode==="pvp"){
-if(keys.p2Left && p2.position.x>-14) p2.position.x-=0.3;
-if(keys.p2Right && p2.position.x<14) p2.position.x+=0.3;
-}else{
-botAI();
-}
+        /* MOVE P1 */
+        if(keys.p1Left && p1.position.x>-14) p1.position.x-=0.3;
+        if(keys.p1Right && p1.position.x<14) p1.position.x+=0.3;
 
-/* BULLETS */
-for(let i=bullets.length-1;i>=0;i--){
-let b=bullets[i];
-b.position.z+=b.userData.dir*0.8;
+        /* MOVE P2 */
+        if(mode==="pvp"){
+            if(keys.p2Left && p2.position.x>-14) p2.position.x-=0.3;
+            if(keys.p2Right && p2.position.x<14) p2.position.x+=0.3;
+        }else{
+            botAI();
+        }
 
-let target=b.userData.dir===1?p2:p1;
+        /* BULLETS */
+        for(let i=bullets.length-1;i>=0;i--){
 
-if(Math.abs(b.position.x-target.position.x)<2 &&
-Math.abs(b.position.z-target.position.z)<2){
+            let b=bullets[i];
+            b.position.z+=b.userData.dir*0.8;
 
-if(target===p1){
-hp1-=20;
-if(hp1<=0){
-hp1=0;
-updateUI();
-scene.remove(b);
-bullets.splice(i,1);
-gameOver(2);
-return;
-}
-}else{
-hp2-=20;
-if(hp2<=0){
-hp2=0;
-updateUI();
-scene.remove(b);
-bullets.splice(i,1);
-gameOver(1);
-return;
-}
-}
+            let target=b.userData.dir===1?p2:p1;
 
-scene.remove(b);
-bullets.splice(i,1);
-updateUI();
-}
+            if(
+                Math.abs(b.position.x-target.position.x)<2 &&
+                Math.abs(b.position.z-target.position.z)<2
+            ){
 
-if(b.position.z>30||b.position.z<-30){
-scene.remove(b);
-bullets.splice(i,1);
-}
-}
+                if(target===p1){
 
-renderer.render(scene,camera);
+                    hp1-=20;
+
+                    if(hp1<=0){
+                        hp1=0;
+                        updateUI();
+                        scene.remove(b);
+                        bullets.splice(i,1);
+                        gameOver(2);
+                        return;
+                    }
+
+                }else{
+
+                    hp2-=20;
+
+                    if(hp2<=0){
+                        hp2=0;
+                        updateUI();
+                        scene.remove(b);
+                        bullets.splice(i,1);
+                        gameOver(1);
+                        return;
+                    }
+                }
+
+                scene.remove(b);
+                bullets.splice(i,1);
+                updateUI();
+            }
+
+            if(b.position.z>30 || b.position.z<-30){
+                scene.remove(b);
+                bullets.splice(i,1);
+            }
+        }
+    }
+
+    renderer.render(scene,camera);
 }
 
 </script>
