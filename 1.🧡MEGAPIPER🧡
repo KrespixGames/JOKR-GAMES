@@ -1,332 +1,552 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>MEGAPIPER</title>
-    <style>
-        body { margin: 0; overflow: hidden; background: #111; font-family: Arial; }
-        canvas { display: block; }
-        #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .hud { display: flex; justify-content: space-between; padding: 15px; }
-        .stat-box { width: 280px; }
-        .label { color: white; font-weight: bold; font-size: 14px; margin-bottom: 3px; display: flex; justify-content: space-between; }
-        .bar-bg { background: rgba(255,255,255,0.2); border: 2px solid white; height: 22px; position: relative; }
-        .bar { height: 100%; width: 100%; transition: width 0.1s; }
-        #p1-hp { background: #00aaff; }
-        #p2-hp { background: #ff3333; }
-        .ammo-box { display: flex; gap: 4px; margin-top: 5px; }
-        .ammo-pip { width: 30%; height: 18px; background: #ffff00; border-radius: 2px; transition: 0.2s; }
-        .ammo-pip.empty { background: #333; opacity: 0.3; }
-        .reload-msg { color: #ff0000; font-size: 11px; display: none; }
-        .reload-msg.on { display: block; animation: bl 0.5s infinite; }
-        @keyframes bl { 50% { opacity: 0; } }
-        #msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; color: white; display: none; background: rgba(0,0,0,0.9); padding: 30px; border: 2px solid gold; border-radius: 10px; pointer-events: auto; }
-        #msg h1 { color: gold; margin: 0 0 15px; }
-        #msg button { font-size: 18px; padding: 8px 20px; cursor: pointer; }
-        #info { position: absolute; bottom: 10px; width: 100%; text-align: center; color: #777; font-size: 13px; }
-    </style>
+<meta charset="UTF-8">
+<title>MEGAPIPER</title>
+
+<style>
+body {
+    margin:0;
+    overflow:hidden;
+    background:#111;
+    font-family:Arial;
+}
+
+/* ===== MENU ===== */
+#menu, #difficultyMenu {
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.95);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:15px;
+    color:white;
+    z-index:10;
+}
+
+#menu h1 {
+    color:gold;
+    font-size:60px;
+    text-shadow:0 0 20px gold;
+}
+#menu{
+background:linear-gradient(135deg,#0f172a,#111,#3b0764);
+}
+#difficultyMenu{
+background:linear-gradient(135deg,#111,#220022);
+}
+
+button {
+    padding:12px 25px;
+    font-size:18px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+button:hover { transform:scale(1.05); }
+
+#menu button:nth-child(2){ background:#00aaff; color:white; }
+#menu button:nth-child(3){ background:#ff4444; color:white; }
+
+#difficultyMenu button:nth-child(2){background:#2ecc71;}
+#difficultyMenu button:nth-child(3){background:#f1c40f;}
+#difficultyMenu button:nth-child(4){background:#e74c3c;}
+
+/* ===== HUD ===== */
+#ui {
+    position:absolute;
+    top:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+}
+
+.hud {
+    display:flex;
+    justify-content:space-between;
+    padding:15px;
+}
+
+.stat-box { width:280px; }
+
+.label {
+    color:white;
+    font-weight:bold;
+    font-size:14px;
+    display:flex;
+    justify-content:space-between;
+}
+
+.bar-bg {
+    background:rgba(255,255,255,0.2);
+    border:2px solid white;
+    height:22px;
+}
+
+.bar {
+    height:100%;
+    transition:0.1s;
+}
+
+#p1-hp {background:#00aaff;}
+#p2-hp {background:#ff3333;}
+
+.ammo-box {
+    display:flex;
+    gap:4px;
+    margin-top:5px;
+}
+
+.ammo-pip {
+    width:30%;
+    height:18px;
+    background:#ffff00;
+}
+
+.ammo-pip.empty {
+    background:#333;
+    opacity:0.3;
+}
+
+
+.reload-text{
+    color:#ffd54a;
+    font-weight:bold;
+    font-size:14px;
+    text-align:center;
+    height:18px;
+    opacity:0;
+    transition:opacity 0.25s;
+    text-shadow:0 0 6px rgba(255,213,74,0.5);
+}
+.reload-text.show{
+    opacity:1;
+}
+
+#reload1,
+#reload2{
+    margin-bottom:4px;
+}
+@keyframes pulseReload{
+    from{transform:translateY(0);}
+    to{transform:translateY(-2px);}
+}
+
+#msg {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:rgba(0,0,0,0.9);
+    padding:30px;
+    color:white;
+    display:none;
+    border:2px solid gold;
+    pointer-events:auto;
+}
+</style>
 </head>
+
 <body>
-    <div id="ui">
-        <div class="hud">
-            <div class="stat-box">
-                <div class="label"><span>P1 (Arrow keys)</span><span id="p1-rel" class="reload-msg">RELOADING...</span></div>
-                <div class="bar-bg"><div id="p1-hp" class="bar"></div></div>
-                <div class="ammo-box">
-                    <div id="p1-a1" class="ammo-pip"></div>
-                    <div id="p1-a2" class="ammo-pip"></div>
-                    <div id="p1-a3" class="ammo-pip"></div>
-                </div>
-            </div>
-            <div class="stat-box" style="text-align:right;">
-                <div class="label"><span id="p2-rel" class="reload-msg">RELOADING...</span><span>P2 (W+A+D)</span></div>
-                <div class="bar-bg"><div id="p2-hp" class="bar"></div></div>
-                <div class="ammo-box">
-                    <div id="p2-a1" class="ammo-pip"></div>
-                    <div id="p2-a2" class="ammo-pip"></div>
-                    <div id="p2-a3" class="ammo-pip"></div>
-                </div>
-            </div>
-        </div>
-        <div id="msg">
-            <h1 id="win-txt">WINNER!</h1>
-            <button onclick="resetGame()">PLAY AGAIN</button>
-        </div>
-        <div id="info">
-            P1: Arrows to move + ArrowUp to shoot | P2: A+D to move, W to shoot
-        </div>
-    </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script>
-        const MAX_HP = 200;
-        const MAX_AMMO = 3;
-        const RELOAD_TIME = 2000;
-        const MOVE_SPEED = 0.3;
-        const BULLET_SPEED = 0.8;
-        const LIMIT_X = 14;
+<!-- ===== MENU ===== -->
+<div id="menu">
+    <h1>MEGAPIPER</h1>
+    <button onclick="selectMode('pvp')">1 VS 1</button>
+    <button onclick="selectMode('bot')">PLAY VS BOT</button>
+</div>
 
-        let scene, camera, renderer;
-        let player1, player2;
-        let bullets = [];
-        let gameActive = true;
+<div id="difficultyMenu" style="display:none;">
+    <h2>Select Difficulty</h2>
+    <button onclick="startGame('easy')">EASY</button>
+    <button onclick="startGame('medium')">MEDIUM</button>
+    <button onclick="startGame('hard')">HARD</button>
+</div>
 
-        let hp1 = MAX_HP, hp2 = MAX_HP;
-        let ammo1 = MAX_AMMO, ammo2 = MAX_AMMO;
-        let reloading1 = false, reloading2 = false;
+<!-- ===== UI ===== -->
+<div id="ui">
+<div class="hud">
 
-        const keys = { p1Left: false, p1Right: false, p1Shoot: false, p2Left: false, p2Right: false, p2Shoot: false };
+<div class="stat-box">
+<div id="reload1" class="reload-text">RELOADING...</div>
+<div class="label"><span>P1</span></div>
+<div class="bar-bg"><div id="p1-hp" class="bar"></div></div>
+<div class="ammo-box">
+<div id="p1-a1" class="ammo-pip"></div>
+<div id="p1-a2" class="ammo-pip"></div>
+<div id="p1-a3" class="ammo-pip"></div>
+</div>
+</div>
 
-        function init() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x202030);
-            scene.fog = new THREE.Fog(0x202030, 20, 50);
+<div class="stat-box" style="text-align:right;">
+<div id="reload2" class="reload-text">RELOADING...</div>
+<div class="label"><span>P2</span></div>
+<div class="bar-bg"><div id="p2-hp" class="bar"></div></div>
+<div class="ammo-box">
+<div id="p2-a1" class="ammo-pip"></div>
+<div id="p2-a2" class="ammo-pip"></div>
+<div id="p2-a3" class="ammo-pip"></div>
+</div>
+</div>
 
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 15, 25);
-            camera.lookAt(0, 0, 0);
+</div>
 
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            document.body.appendChild(renderer.domElement);
+<div id="msg">
+<h1 id="win"></h1>
+<div style="display:flex;gap:15px;justify-content:center;margin-top:20px;">
+<button style="background:#00aaff;color:white;" onclick="restartGame()">PLAY AGAIN</button>
+<button style="background:#ff3333;color:white;" onclick="window.location.reload()">GO TO MENU</button>
+</div>
+</div>
+</div>
 
-            scene.add(new THREE.AmbientLight(0x404040));
-            let dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            dirLight.position.set(10, 20, 10);
-            dirLight.castShadow = true;
-            scene.add(dirLight);
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-            scene.add(new THREE.GridHelper(50, 50, 0x444444, 0x222222));
-            let plane = new THREE.Mesh(
-                new THREE.PlaneGeometry(50, 50),
-                new THREE.MeshPhongMaterial({ color: 0x111111 })
-            );
-            plane.rotation.x = -Math.PI / 2;
-            plane.position.y = -0.1;
-            scene.add(plane);
+<script>
 
-            player1 = new THREE.Mesh(
-                new THREE.BoxGeometry(2, 3, 2),
-                new THREE.MeshPhongMaterial({ color: 0x00aaff, emissive: 0x002244 })
-            );
-            player1.position.set(0, 1.5, -10);
-            player1.castShadow = true;
-            scene.add(player1);
+/* ===== STATE ===== */
+let scene,camera,renderer;
+let p1,p2;
+let bullets=[];
 
-            player2 = new THREE.Mesh(
-                new THREE.BoxGeometry(2, 3, 2),
-                new THREE.MeshPhongMaterial({ color: 0xff3333, emissive: 0x440000 })
-            );
-            player2.position.set(0, 1.5, 10);
-            player2.rotation.y = Math.PI;
-            player2.castShadow = true;
-            scene.add(player2);
+let hp1=200,hp2=200;
 
-            window.addEventListener('resize', onResize);
-            document.addEventListener('keydown', onKeyDown);
-            document.addEventListener('keyup', onKeyUp);
+let ammo1=3,ammo2=3;
+let reloading1=false,reloading2=false;
 
-            updateAmmoDisplay();
-            updateHealthBars();
-            animate();
-        }
+const MAX_AMMO=3;
+const RELOAD_TIME=2000;
 
-        function createBullet(x, z, direction) {
-            let bullet = new THREE.Mesh(
-                new THREE.SphereGeometry(0.8, 16, 16),
-                new THREE.MeshBasicMaterial({ color: 0xffff00 })
-            );
-            bullet.position.set(x, 1.5, z);
-            bullet.userData = { direction: direction };
-            scene.add(bullet);
-            bullets.push(bullet);
-        }
+let mode="pvp";
+let difficulty="medium";
+let gameStarted=false;
 
-        function onKeyDown(event) {
-            switch(event.code) {
-                case 'ArrowLeft': keys.p1Left = true; break;
-                case 'ArrowRight': keys.p1Right = true; break;
+let botTimer=0;
 
-                // 🔥 CANVI IMPORTANT: Space -> ArrowUp
-                case 'ArrowUp':
-                    if (!keys.p1Shoot) shoot(1);
-                    keys.p1Shoot = true;
-                    break;
+/* ===== INPUT ===== */
+const keys={
+p1Left:false,p1Right:false,
+p2Left:false,p2Right:false
+};
 
-                case 'KeyA': keys.p2Left = true; break;
-                case 'KeyD': keys.p2Right = true; break;
-                case 'KeyW':
-                    if (!keys.p2Shoot) shoot(2);
-                    keys.p2Shoot = true;
-                    break;
-            }
-        }
+/* ===== MENU ===== */
+function selectMode(m){
+mode=m;
+document.getElementById("menu").style.display="none";
 
-        function onKeyUp(event) {
-            switch(event.code) {
-                case 'ArrowLeft': keys.p1Left = false; break;
-                case 'ArrowRight': keys.p1Right = false; break;
+if(m==="bot"){
+document.getElementById("difficultyMenu").style.display="flex";
+}else{
+startGame("none");
+}
+}
 
-                // 🔥 CANVI IMPORTANT: Space -> ArrowUp
-                case 'ArrowUp': keys.p1Shoot = false; break;
+function startGame(diff){
+difficulty=diff;
+document.getElementById("difficultyMenu").style.display="none";
+init();
+gameStarted=true;
+}
 
-                case 'KeyA': keys.p2Left = false; break;
-                case 'KeyD': keys.p2Right = false; break;
-                case 'KeyW': keys.p2Shoot = false; break;
-            }
-        }
+/* ===== INIT ===== */
+function init(){
 
-        function shoot(playerNum) {
-            if (!gameActive) return;
-            
-            if (playerNum === 1 && hp1 > 0) {
-                if (ammo1 > 0 && !reloading1) {
-                    createBullet(player1.position.x, player1.position.z + 1, 1);
-                    ammo1--;
-                    updateAmmoDisplay();
-                    checkReload(1);
-                }
-            } else if (playerNum === 2 && hp2 > 0) {
-                if (ammo2 > 0 && !reloading2) {
-                    createBullet(player2.position.x, player2.position.z - 1, -1);
-                    ammo2--;
-                    updateAmmoDisplay();
-                    checkReload(2);
-                }
-            }
-        }
+scene=new THREE.Scene();
+scene.background=new THREE.Color(0x202030);
+scene.fog=new THREE.Fog(0x202030,20,60);
 
-        function checkReload(playerNum) {
-            if (playerNum === 1 && ammo1 === 0 && !reloading1) {
-                reloading1 = true;
-                document.getElementById('p1-rel').classList.add('on');
-                for (let i = 1; i <= 3; i++) document.getElementById('p1-a' + i).classList.add('empty');
+camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,1000);
+camera.position.set(0,15,25);
+camera.lookAt(0,0,0);
 
-                setTimeout(() => {
-                    ammo1 = MAX_AMMO;
-                    reloading1 = false;
-                    document.getElementById('p1-rel').classList.remove('on');
-                    updateAmmoDisplay();
-                }, RELOAD_TIME);
-            } else if (playerNum === 2 && ammo2 === 0 && !reloading2) {
-                reloading2 = true;
-                document.getElementById('p2-rel').classList.add('on');
-                for (let i = 1; i <= 3; i++) document.getElementById('p2-a' + i).classList.add('empty');
+renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
 
-                setTimeout(() => {
-                    ammo2 = MAX_AMMO;
-                    reloading2 = false;
-                    document.getElementById('p2-rel').classList.remove('on');
-                    updateAmmoDisplay();
-                }, RELOAD_TIME);
-            }
-        }
+/* LIGHT */
+scene.add(new THREE.AmbientLight(0x404040));
+let dir=new THREE.DirectionalLight(0xffffff,0.9);
+dir.position.set(10,20,10);
+scene.add(dir);
 
-        function updateAmmoDisplay() {
-            for (let i = 1; i <= 3; i++) {
-                let pip1 = document.getElementById('p1-a' + i);
-                let pip2 = document.getElementById('p2-a' + i);
+/* GRID (SOFT) */
+let grid=new THREE.GridHelper(60,20,0x444444,0x222222);
+grid.material.transparent=true;
+grid.material.opacity=0.25;
+scene.add(grid);
 
-                if (i > ammo1) pip1.classList.add('empty');
-                else pip1.classList.remove('empty');
+/* GROUND */
+let ground=new THREE.Mesh(
+new THREE.PlaneGeometry(60,60),
+new THREE.MeshPhongMaterial({color:0x111111})
+);
+ground.rotation.x=-Math.PI/2;
+scene.add(ground);
 
-                if (i > ammo2) pip2.classList.add('empty');
-                else pip2.classList.remove('empty');
-            }
-        }
+/* PLAYERS */
+p1=new THREE.Mesh(
+new THREE.BoxGeometry(2,3,2),
+new THREE.MeshPhongMaterial({color:0x00aaff})
+);
+p1.position.set(0,1.5,-10);
+scene.add(p1);
 
-        function updateHealthBars() {
-            document.getElementById('p1-hp').style.width = (hp1 / MAX_HP * 100) + '%';
-            document.getElementById('p2-hp').style.width = (hp2 / MAX_HP * 100) + '%';
-        }
+p2=new THREE.Mesh(
+new THREE.BoxGeometry(2,3,2),
+new THREE.MeshPhongMaterial({color:0xff3333})
+);
+p2.position.set(0,1.5,10);
+scene.add(p2);
 
-        function checkGameOver() {
-            if (hp1 <= 0 || hp2 <= 0) {
-                gameActive = false;
-                let msgBox = document.getElementById('msg');
-                let winText = document.getElementById('win-txt');
+/* INPUT */
+addEventListener("keydown",down);
+addEventListener("keyup",up);
 
-                if (hp2 <= 0) {
-                    winText.textContent = 'PLAYER 1 WINS!';
-                    winText.style.color = '#00aaff';
-                } else {
-                    winText.textContent = 'PLAYER 2 WINS!';
-                    winText.style.color = '#ff3333';
-                }
+animate();
+}
 
-                msgBox.style.display = 'block';
-            }
-        }
+/* ===== INPUT HOLD ===== */
+function down(e){
+if(e.code==="ArrowLeft") keys.p1Left=true;
+if(e.code==="ArrowRight") keys.p1Right=true;
+if(e.code==="ArrowUp") shoot(1);
 
-        function resetGame() {
-            hp1 = hp2 = MAX_HP;
-            ammo1 = ammo2 = MAX_AMMO;
-            reloading1 = reloading2 = false;
-            gameActive = true;
+if(mode==="pvp"){
+if(e.code==="KeyA") keys.p2Left=true;
+if(e.code==="KeyD") keys.p2Right=true;
+if(e.code==="KeyW") shoot(2);
+}
+}
 
-            player1.position.set(0, 1.5, -10);
-            player2.position.set(0, 1.5, 10);
+function up(e){
+if(e.code==="ArrowLeft") keys.p1Left=false;
+if(e.code==="ArrowRight") keys.p1Right=false;
 
-            for (let b of bullets) scene.remove(b);
-            bullets = [];
+if(e.code==="KeyA") keys.p2Left=false;
+if(e.code==="KeyD") keys.p2Right=false;
+}
 
-            document.getElementById('msg').style.display = 'none';
-            updateAmmoDisplay();
-            updateHealthBars();
-        }
+/* ===== SHOOT + RELOAD ===== */
+function shoot(p){
 
-        function onResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
+if(p===1){
+if(reloading1||ammo1<=0) return;
+ammo1--;
+if(ammo1===0) reload(1);
+spawnBullet(p1.position,1);
+}
 
-        function animate() {
-            requestAnimationFrame(animate);
+if(p===2){
+if(reloading2||ammo2<=0) return;
+ammo2--;
+if(ammo2===0) reload(2);
+spawnBullet(p2.position,-1);
+}
 
-            if (gameActive) {
-                if (keys.p1Left && player1.position.x > -LIMIT_X) player1.position.x -= MOVE_SPEED;
-                if (keys.p1Right && player1.position.x < LIMIT_X) player1.position.x += MOVE_SPEED;
+updateUI();
+}
 
-                if (keys.p2Left && player2.position.x > -LIMIT_X) player2.position.x -= MOVE_SPEED;
-                if (keys.p2Right && player2.position.x < LIMIT_X) player2.position.x += MOVE_SPEED;
-            }
+function reload(p){
 
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                let b = bullets[i];
-                b.position.z += b.userData.direction * BULLET_SPEED;
+if(p===1){
+reloading1=true;
+updateUI();
+setTimeout(()=>{
+ammo1=MAX_AMMO;
+reloading1=false;
+updateUI();
+},RELOAD_TIME);
+}
 
-                let hit = false;
+if(p===2){
+reloading2=true;
+updateUI();
+setTimeout(()=>{
+ammo2=MAX_AMMO;
+reloading2=false;
+updateUI();
+},RELOAD_TIME);
+}
+}
 
-                if (b.userData.direction > 0) {
-                    if (Math.abs(b.position.z - player2.position.z) < 1.5 &&
-                        Math.abs(b.position.x - player2.position.x) < 2) {
-                        hit = true;
-                        hp2 -= 20;
-                        updateHealthBars();
-                        checkGameOver();
-                    }
-                } else {
-                    if (Math.abs(b.position.z - player1.position.z) < 1.5 &&
-                        Math.abs(b.position.x - player1.position.x) < 2) {
-                        hit = true;
-                        hp1 -= 20;
-                        updateHealthBars();
-                        checkGameOver();
-                    }
-                }
+function spawnBullet(pos,dir){
+let b=new THREE.Mesh(
+new THREE.SphereGeometry(0.6),
+new THREE.MeshBasicMaterial({color:0xffff00})
+);
 
-                if (hit || b.position.z < -20 || b.position.z > 20) {
-                    scene.remove(b);
-                    bullets.splice(i, 1);
-                }
-            }
+b.position.copy(pos);
+b.userData={dir};
 
-            renderer.render(scene, camera);
-        }
+scene.add(b);
+bullets.push(b);
+}
 
-        init();
-    </script>
+/* ===== BOT ===== */
+function botAI(){
+
+if(mode!=="bot") return;
+
+let speed,shootChance,aimError;
+
+if(difficulty==="easy"){
+speed=0.05; shootChance=0.004; aimError=4.5;
+}
+if(difficulty==="medium"){
+speed=0.16; shootChance=0.014; aimError=1.5;
+}
+if(difficulty==="hard"){
+speed=0.45; shootChance=0.05; aimError=0;
+p2.position.x = p1.position.x; // perfect dodge/aim tracking
+}
+
+/* MOVE */
+let target=p1.position.x+(Math.random()-0.5)*aimError;
+
+if(p2.position.x<target) p2.position.x+=speed;
+if(p2.position.x>target) p2.position.x-=speed;
+
+/* SHOOT */
+botTimer+=Math.random()*shootChance;
+if(botTimer>1){
+shoot(2);
+botTimer=0;
+}
+}
+
+/* ===== UI ===== */
+function updateUI(){
+
+for(let i=1;i<=3;i++){
+document.getElementById("p1-a"+i).classList.toggle("empty",i>ammo1);
+document.getElementById("p2-a"+i).classList.toggle("empty",i>ammo2);
+}
+
+document.getElementById("p1-hp").style.width=(hp1/200*100)+"%";
+document.getElementById("p2-hp").style.width=(hp2/200*100)+"%";
+
+document.getElementById("reload1").classList.toggle("show", reloading1);
+document.getElementById("reload2").classList.toggle("show", reloading2);
+}
+
+
+
+function restartGame(){
+
+hp1=200;
+hp2=200;
+
+ammo1=3;
+ammo2=3;
+
+reloading1=false;
+reloading2=false;
+
+botTimer=0;
+
+p1.position.set(0,1.5,-10);
+p2.position.set(0,1.5,10);
+
+for(let i=bullets.length-1;i>=0;i--){
+    scene.remove(bullets[i]);
+}
+bullets=[];
+
+document.getElementById("msg").style.display="none";
+
+updateUI();
+
+gameStarted=true;
+}
+
+function gameOver(winner){
+
+gameStarted=false;
+
+const winText=document.getElementById("win");
+
+if(winner===1){
+    winText.textContent="PLAYER BLUE WINS!";
+    winText.style.color="#00aaff";
+}else{
+    winText.textContent="PLAYER RED WINS!";
+    winText.style.color="#ff3333";
+}
+
+winText.style.fontSize="56px";
+winText.style.marginBottom="25px";
+
+document.getElementById("msg").style.display="block";
+}
+
+/* ===== LOOP ===== */
+function animate(){
+
+requestAnimationFrame(animate);
+if(!gameStarted) return;
+
+/* MOVE P1 */
+if(keys.p1Left && p1.position.x>-14) p1.position.x-=0.3;
+if(keys.p1Right && p1.position.x<14) p1.position.x+=0.3;
+
+/* MOVE P2 */
+if(mode==="pvp"){
+if(keys.p2Left && p2.position.x>-14) p2.position.x-=0.3;
+if(keys.p2Right && p2.position.x<14) p2.position.x+=0.3;
+}else{
+botAI();
+}
+
+/* BULLETS */
+for(let i=bullets.length-1;i>=0;i--){
+let b=bullets[i];
+b.position.z+=b.userData.dir*0.8;
+
+let target=b.userData.dir===1?p2:p1;
+
+if(Math.abs(b.position.x-target.position.x)<2 &&
+Math.abs(b.position.z-target.position.z)<2){
+
+if(target===p1){
+hp1-=20;
+if(hp1<=0){
+hp1=0;
+updateUI();
+scene.remove(b);
+bullets.splice(i,1);
+gameOver(2);
+return;
+}
+}else{
+hp2-=20;
+if(hp2<=0){
+hp2=0;
+updateUI();
+scene.remove(b);
+bullets.splice(i,1);
+gameOver(1);
+return;
+}
+}
+
+scene.remove(b);
+bullets.splice(i,1);
+updateUI();
+}
+
+if(b.position.z>30||b.position.z<-30){
+scene.remove(b);
+bullets.splice(i,1);
+}
+}
+
+renderer.render(scene,camera);
+}
+
+</script>
 </body>
 </html>
