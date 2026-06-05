@@ -59,6 +59,12 @@ button:hover{transform:scale(1.04)}
 <button id="againBtn">Play again</button>
 <button id="menuBtn">Go to menu</button>
 </div>
+<h1 id="winnerText">Winner</h1>
+<div id="stats"></div>
+
+<button id="againBtn">Play again</button>
+<button id="menuBtn">Go to menu</button>
+</div>
 
 <script>
 const canvas=document.getElementById("game");
@@ -177,8 +183,8 @@ this.vy=-950;
 }
 }
 
-if(this.y>lavaY+300){
-killPlayer(this);
+if (this.y > lavaY + 300 || this.y - cameraY > H) {
+  killPlayer(this);
 }
 }
 draw(camY){
@@ -341,6 +347,7 @@ gameState="playing";
 }
 
 document.getElementById("playBtn").onclick=()=>{beep(700,.08);startGame();};
+document.getElementById("againBtn").onclick=()=>{beep(700,.08);startGame();};
 document.getElementById("menuBtn").onclick = () => {
   beep(300, .1);
   document.getElementById("gameOver").classList.add("hidden");
@@ -506,6 +513,14 @@ render();
 requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+  window.addEventListener("DOMContentLoaded", () => {
+
+  document.getElementById("playBtn").onclick = () => {
+    beep(700,.08);
+    startGame();
+  };
+
+});
 </script>
 </body>
 </html>
